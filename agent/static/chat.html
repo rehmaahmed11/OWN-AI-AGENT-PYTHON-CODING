@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>🤖 Own AI Agent — Self-Learning Chat</title>
+<style>
+:root{
+  --bg:#0f1420; --panel:#182032; --panel2:#1f2a44; --line:#2b3a5c;
+  --txt:#e8eefb; --dim:#9aa8c7; --me:#2f6fed; --bot:#22304d;
+  --green:#35c26e; --red:#e5605e; --amber:#e8a33d; --chip:#31456f;
+}
+*{box-sizing:border-box} html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  display:flex;flex-direction:column;max-width:900px;margin:0 auto;height:100dvh}
+header{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--panel);
+  border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+header .logo{font-size:22px}
+header h1{font-size:16px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header h1 small{display:block;font-size:11px;color:var(--dim);font-weight:400}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--amber);flex:none}
+.dot.on{background:var(--green)} .dot.off{background:var(--red)}
+.badge{font-size:11px;background:var(--chip);padding:2px 8px;border-radius:20px;color:var(--txt);white-space:nowrap}
+nav.tabs{display:flex;gap:6px;padding:8px 14px;background:var(--panel);border-bottom:1px solid var(--line)}
+nav.tabs button{flex:1;border:1px solid var(--line);background:var(--panel2);color:var(--txt);
+  border-radius:10px;padding:8px 4px;font-size:13px;cursor:pointer}
+nav.tabs button.active{background:var(--me);border-color:var(--me);font-weight:700}
+main{flex:1;overflow:hidden;display:flex;flex-direction:column;position:relative}
+.view{display:none;flex:1;overflow-y:auto;padding:14px;flex-direction:column}
+.view.active{display:flex}
+#msgs{gap:10px}
+.msg{display:flex;gap:8px;max-width:92%}
+.msg .av{font-size:20px;flex:none;margin-top:2px}
+.msg .bubble{background:var(--bot);border:1px solid var(--line);border-radius:4px 14px 14px 14px;
+  padding:9px 12px;overflow-wrap:anywhere;white-space:pre-wrap}
+.msg.me{align-self:flex-end;flex-direction:row-reverse}
+.msg.me .bubble{background:var(--me);border-color:var(--me);border-radius:14px 4px 14px 14px;color:#fff}
+.msg .meta{font-size:11px;color:var(--dim);margin-top:4px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.msg .meta button{background:none;border:1px solid var(--line);color:var(--dim);border-radius:8px;
+  font-size:12px;padding:1px 8px;cursor:pointer}
+.msg .meta button.picked{border-color:var(--green);color:var(--green)}
+.msg pre{background:#0b101c;border:1px solid var(--line);border-radius:8px;padding:8px;overflow-x:auto;
+  font-size:12.5px;white-space:pre}
+.learned-chip{display:inline-block;background:#3a2f10;border:1px solid var(--amber);color:#ffd98a;
+  font-size:11px;border-radius:12px;padding:1px 8px;margin:2px 4px 0 0}
+.typing{color:var(--dim);font-style:italic}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.card b{display:block;font-size:20px} .card span{font-size:11px;color:var(--dim)}
+.section{font-size:12px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 6px}
+.fact{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px;
+  margin-bottom:6px;font-size:13px;display:flex;gap:8px;align-items:center}
+.fact code{background:#0b101c;padding:1px 6px;border-radius:6px;font-size:12px}
+.fact small{color:var(--dim);margin-left:auto;flex:none}
+.fact button{background:none;border:1px solid var(--line);color:var(--dim);border-radius:8px;cursor:pointer;flex:none}
+.empty{color:var(--dim);text-align:center;padding:24px 10px;font-size:13px}
+#buildlog{background:#0b101c;border:1px solid var(--line);border-radius:10px;padding:10px;
+  font:12px/1.5 monospace;white-space:pre-wrap;max-height:300px;overflow-y:auto}
+.row{display:flex;gap:8px} .row input{flex:1}
+input[type=text],textarea{width:100%;background:#0b101c;border:1px solid var(--line);color:var(--txt);
+  border-radius:10px;padding:10px;font-size:14px;font-family:inherit}
+input:focus,textarea:focus{outline:none;border-color:var(--me)}
+button.go{background:var(--me);border:none;color:#fff;border-radius:10px;padding:10px 16px;
+  font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap}
+button.go:disabled{opacity:.5}
+button.ghost{background:var(--panel2);border:1px solid var(--line);color:var(--txt);border-radius:10px;
+  padding:10px 14px;font-size:13px;cursor:pointer}
+footer{padding:10px 14px calc(10px + env(safe-area-inset-bottom));background:var(--panel);
+  border-top:1px solid var(--line)}
+#toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#12331f;
+  border:1px solid var(--green);color:#bdf0cf;padding:8px 16px;border-radius:20px;font-size:13px;
+  display:none;z-index:9;max-width:90%;text-align:center}
+@media(min-width:700px){header h1{font-size:18px}}
+</style>
+</head>
+<body>
+<header>
+  <span class="logo">🤖</span>
+  <h1>Own AI Agent <small>self-learning chat — every message tunes me 🧠</small></h1>
+  <span id="dot" class="dot" title="model status"></span>
+  <span id="mode" class="badge">…</span>
+</header>
+<nav class="tabs">
+  <button id="tab-chat" class="active" onclick="show('chat')">💬 Chat</button>
+  <button id="tab-build" onclick="show('build')">🏗 Build</button>
+  <button id="tab-mem" onclick="show('mem')">🧠 Memory</button>
+</nav>
+<main>
+  <div id="view-chat" class="view active"><div id="msgs" style="display:flex;flex-direction:column;gap:10px"></div></div>
+  <div id="view-build" class="view">
+    <div class="section">Describe a project — the agent plans, builds &amp; verifies it</div>
+    <div class="row"><input id="buildtask" type="text" placeholder='e.g. Flask website for a shoes company'>
+      <button class="go" id="buildbtn" onclick="startBuild()">Build</button></div>
+    <div class="section">Progress</div>
+    <div id="buildlog">No build running. Your projects appear in the workspace folder.</div>
+  </div>
+  <div id="view-mem" class="view">
+    <div class="cards">
+      <div class="card"><b id="st-chats">0</b><span>💬 chats</span></div>
+      <div class="card"><b id="st-facts">0</b><span>💡 facts learned</span></div>
+      <div class="card"><b id="st-tasks">0</b><span>🏗 projects built</span></div>
+      <div class="card"><b id="st-good">0</b><span>👍 liked</span></div>
+      <div class="card"><b id="st-bad">0</b><span>👎 disliked</span></div>
+      <div class="card"><b id="st-mode">…</b><span>model</span></div>
+    </div>
+    <div class="section">💡 What I learned about you (tap 🗑 to make me forget)</div>
+    <div id="facts"></div>
+    <div class="section">🏗 Projects I remember</div>
+    <div id="tasks"></div>
+    <div style="margin-top:12px"><button class="ghost" onclick="refreshMem()">↻ Refresh memory</button></div>
+  </div>
+</main>
+<footer id="composer">
+  <div class="row"><input id="inp" type="text" autocomplete="off"
+    placeholder="Chat with me… I learn from every message 🧠">
+    <button class="go" id="sendbtn" onclick="send()">Send</button></div>
+</footer>
+<div id="toast"></div>
+<script>
+let session = localStorage.getItem('agent_session') || (Math.random().toString(36).slice(2,10));
+localStorage.setItem('agent_session', session);
+let modelUp = false;
+
+function esc(s){return (s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+function fmt(ts){if(!ts)return '';const d=new Date(ts*1000);return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});}
+function renderBody(text){
+  // minimal code-fence rendering: ```lang ... ```
+  const parts = esc(text).split(/```/);
+  let html='';
+  for(let i=0;i<parts.length;i++){
+    if(i%2===1){ html += '<pre>'+parts[i].replace(/^\w+\n/,'')+'</pre>'; }
+    else { html += parts[i].replace(/\n/g,'<br>'); }
+  }
+  return html;
+}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';
+  clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',3500);}
+function show(name){
+  for(const v of ['chat','build','mem']){
+    document.getElementById('view-'+v).classList.toggle('active', v===name);
+    document.getElementById('tab-'+v).classList.toggle('active', v===name);
+  }
+  document.getElementById('composer').style.display = name==='chat' ? '' : 'none';
+  if(name==='mem') refreshMem();
+}
+function bubble(role, text, ts, id, rating, learned){
+  const m=document.createElement('div'); m.className='msg'+(role==='user'?' me':'');
+  const av=document.createElement('div'); av.className='av'; av.textContent=role==='user'?'🧑':'🤖';
+  const wrap=document.createElement('div'); wrap.style.maxWidth='100%';
+  const b=document.createElement('div'); b.className='bubble'; b.innerHTML=renderBody(text);
+  wrap.appendChild(b);
+  const meta=document.createElement('div'); meta.className='meta';
+  meta.innerHTML='<span>'+fmt(ts)+'</span>';
+  if(role==='assistant' && id){
+    meta.innerHTML += ' <button data-r="good" class="'+(rating==='good'?'picked':'')+'">👍</button>'
+      + '<button data-r="bad" class="'+(rating==='bad'?'picked':'')+'">👎</button>';
+    meta.querySelectorAll('button').forEach(btn=>btn.onclick=()=>rate(id,btn.dataset.r,meta));
+  }
+  wrap.appendChild(meta);
+  if(learned && learned.length){
+    const chips=document.createElement('div');
+    chips.innerHTML=learned.map(l=>'<span class="learned-chip">🧠 learned: '+esc(l.key)+' = '+esc(l.value)+'</span>').join('');
+    wrap.appendChild(chips);
+  }
+  m.appendChild(av); m.appendChild(wrap); return m;
+}
+async function rate(id, rating, metaEl){
+  await fetch('/api/feedback',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({chat_id:id,rating})});
+  metaEl.querySelectorAll('button').forEach(b=>b.classList.toggle('picked', b.dataset.r===rating));
+  toast(rating==='good' ? '👍 Noted — I\'ll do more of that!' : '👎 Noted — I\'ll tune away from that style.');
+}
+async function send(){
+  const inp=document.getElementById('inp'); const text=inp.value.trim(); if(!text) return;
+  inp.value=''; document.getElementById('sendbtn').disabled=true;
+  const box=document.getElementById('msgs');
+  box.appendChild(bubble('user', text, Date.now()/1000));
+  box.parentElement.scrollTop=box.parentElement.scrollHeight;
+  const tp=document.createElement('div'); tp.className='msg';
+  tp.innerHTML='<div class="av">🤖</div><div><div class="bubble typing">thinking &amp; recalling memory… 🧠</div></div>';
+  box.appendChild(tp); box.parentElement.scrollTop=box.parentElement.scrollHeight;
+  try{
+    const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({message:text,session})});
+    const d=await r.json(); tp.remove();
+    box.appendChild(bubble('assistant', d.reply, Date.now()/1000, d.chat_id, null, d.learned));
+    if(d.learned && d.learned.length) toast('🧠 Learned '+d.learned.length+' new thing(s) about you!');
+    setMode(d.mode==='llm');
+  }catch(e){ tp.remove(); box.appendChild(bubble('assistant','⚠️ Could not reach the agent server. Is it running?',Date.now()/1000)); }
+  document.getElementById('sendbtn').disabled=false;
+  box.parentElement.scrollTop=box.parentElement.scrollHeight;
+}
+document.getElementById('inp').addEventListener('keydown',e=>{if(e.key==='Enter')send();});
+function setMode(up){
+  modelUp=up;
+  document.getElementById('dot').className='dot '+(up?'on':'off');
+  document.getElementById('mode').textContent=up?'🟢 model':'📴 offline-memory';
+  document.getElementById('st-mode').textContent=up?'online':'offline';
+}
+async function loadHistory(){
+  const r=await fetch('/api/history?session='+session+'&limit=60'); const d=await r.json();
+  const box=document.getElementById('msgs'); box.innerHTML='';
+  if(!d.messages.length){
+    box.appendChild(bubble('assistant',
+      "👋 Hi! I'm your own AI agent.\n\n💬 Chat with me about anything — every message is read, remembered and used to tune my future replies.\n\nTry:\n• “my name is …” then later “what is my name?”\n• “I prefer Flask” → I'll bias toward Flask\n• 👍 / 👎 on any reply to tune my style\n• 🏗 Build tab → generate full projects", Date.now()/1000));
+  }
+  for(const m of d.messages) box.appendChild(bubble(m.role,m.content,m.ts,m.id,m.rating,null));
+  box.parentElement.scrollTop=box.parentElement.scrollHeight;
+}
+async function refreshMem(){
+  const r=await fetch('/api/memory'); const d=await r.json();
+  document.getElementById('st-chats').textContent=d.stats.chats;
+  document.getElementById('st-facts').textContent=d.stats.facts;
+  document.getElementById('st-tasks').textContent=d.tasks.length;
+  document.getElementById('st-good').textContent=d.stats.good;
+  document.getElementById('st-bad').textContent=d.stats.bad;
+  setMode(d.model_up);
+  const f=document.getElementById('facts'); f.innerHTML='';
+  if(!d.facts.length) f.innerHTML='<div class="empty">Nothing learned yet — tell me “my name is …” in the chat 👆</div>';
+  for(const x of d.facts){
+    const div=document.createElement('div'); div.className='fact';
+    div.innerHTML='<code>'+esc(x.key)+'</code><span>'+esc(x.value)+'</span><small>×'+x.confidence+'</small>';
+    const del=document.createElement('button'); del.textContent='🗑'; del.title='forget this';
+    del.onclick=async()=>{await fetch('/api/forget',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({kind:'fact',id:x.id})}); refreshMem(); toast('🗑 Forgot: '+x.key);};
+    div.appendChild(del); f.appendChild(div);
+  }
+  const t=document.getElementById('tasks'); t.innerHTML='';
+  if(!d.tasks.length) t.innerHTML='<div class="empty">No projects built yet — use the 🏗 Build tab.</div>';
+  for(const x of d.tasks){
+    const div=document.createElement('div'); div.className='fact';
+    div.innerHTML='<code>#'+x.id+'</code><span>('+esc(x.framework||'?')+') '+esc(x.task)+'</span><small>'+esc(x.ts||'')+'</small>';
+    t.appendChild(div);
+  }
+}
+let buildTimer=null;
+async function startBuild(){
+  const task=document.getElementById('buildtask').value.trim();
+  if(!task){toast('Describe the project first 🙂');return;}
+  document.getElementById('buildbtn').disabled=true;
+  document.getElementById('buildlog').textContent='🚀 Starting build…\n';
+  const r=await fetch('/api/build',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({task})});
+  const d=await r.json();
+  if(d.error){document.getElementById('buildlog').textContent='❌ '+d.error;
+    document.getElementById('buildbtn').disabled=false;return;}
+  clearInterval(buildTimer);
+  buildTimer=setInterval(async()=>{
+    const s=await (await fetch('/api/build?id='+d.job_id)).json();
+    document.getElementById('buildlog').textContent=s.logs.join('\n')+(s.done?'':'\n…');
+    document.getElementById('buildlog').scrollTop=1e9;
+    if(s.done){clearInterval(buildTimer);document.getElementById('buildbtn').disabled=false;
+      if(s.report) document.getElementById('buildlog').textContent+='\n\n✅ DONE → '+s.report.project_path;
+      refreshMem();}
+  },1500);
+}
+(async function init(){ await refreshMem(); await loadHistory(); })();
+setInterval(refreshMem, 30000);
+</script>
+</body>
+</html>

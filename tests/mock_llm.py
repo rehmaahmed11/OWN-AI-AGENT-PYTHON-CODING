@@ -129,6 +129,22 @@ class MockHandler(BaseHTTPRequestHandler):
             # referenced by app.py — a real small model would often notice:
             self._reply('{"missing": []}')
             return
+        elif "[MODE:CHAT]" in text:
+            last_user = ""
+            for m in reversed(payload["messages"]):
+                if m.get("role") == "user":
+                    last_user = m.get("content", "")
+                    break
+            # Echo what "profile" the tuned prompt carried, so tests can prove
+            # learning flows into the prompt.
+            learned = "nothing yet"
+            if "Things you have learned about this user" in text:
+                prof = text.split("Things you have learned about this user", 1)[1]
+                learned = prof.split("Relevant past chats")[0].strip()[:300]
+            content = (f"(mock) I heard you: {last_user[:160]}\n"
+                       f"What I know about you so far: {learned}")
+            self._reply(content)
+            return
         else:
             content = "I do not understand."
         self._reply(content)

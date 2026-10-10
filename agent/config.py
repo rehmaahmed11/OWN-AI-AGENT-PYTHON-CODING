@@ -31,6 +31,10 @@ DEFAULTS = {
     "memory_results": 3,      # how many past-task snippets to inject
     "timeout_s": 600,         # phone CPUs are slow; be patient
     "review": True,           # ask the model "what's missing?" at the end
+    # Self-learning chat GUI budgets.
+    "max_tokens_chat": 512,   # max reply length in the chat GUI
+    "chat_results": 5,        # how many past chats to recall per reply
+    "chat_port": 8765,        # default web-GUI port
 }
 
 
