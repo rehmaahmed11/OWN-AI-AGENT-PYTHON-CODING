@@ -4,6 +4,7 @@
   python own_agent.py run "..." [--root shared] [--no-review]
   python own_agent.py memory list | show <id> | forget <id>
   python own_agent.py doctor
+  python own_agent.py chat [--port 8765] [--tk]
 """
 
 from __future__ import annotations
@@ -17,7 +18,7 @@ from .memory import Memory
 from .planner import run_hint, run_task
 from . import llm
 
-KNOWN = {"run", "memory", "doctor"}
+KNOWN = {"run", "memory", "doctor", "chat"}
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -40,6 +41,11 @@ def main(argv: list[str] | None = None) -> int:
     pm.add_argument("id", type=int, nargs="?")
 
     sub.add_parser("doctor", help="check config and model server")
+
+    pc = sub.add_parser("chat", help="open the self-learning chat GUI")
+    pc.add_argument("--port", type=int, default=8765, help="web GUI port (default: 8765)")
+    pc.add_argument("--host", default="0.0.0.0", help="web GUI host (default: 0.0.0.0)")
+    pc.add_argument("--tk", action="store_true", help="use the Tkinter desktop GUI instead of the web GUI")
 
     args = p.parse_args(argv)
     if args.cmd is None:
@@ -111,6 +117,18 @@ def main(argv: list[str] | None = None) -> int:
                 print("Usage: memory forget <id>")
                 return 1
             print("Removed." if mem.forget(args.id) else f"No task #{args.id}.")
+        return 0
+
+    if args.cmd == "chat":
+        if args.tk:
+            from .gui_tk import main as tk_main
+            return tk_main(cfg)
+        from .server import serve_forever
+        if not llm.server_up(cfg):
+            print("📴 Model server is offline — chat still works in memory mode (it learns,\n"
+                  "   answers from what it knows about you), but start the model for full\n"
+                  "   answers:  bash start_model.sh\n")
+        serve_forever(cfg, host=args.host, port=args.port)
         return 0
 
     if args.cmd == "doctor":

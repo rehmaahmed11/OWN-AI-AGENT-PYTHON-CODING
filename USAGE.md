@@ -212,7 +212,53 @@ Practical tips:
 
 ---
 
-## 10. Upgrading later
+## 10. The self-learning chat GUI 💬
+
+Talk to your agent instead of typing one-shot commands:
+
+```bash
+# Session 1 (the brain) must be running:  bash start_model.sh
+# Session 2:
+python own_agent.py chat            # web GUI -> open http://127.0.0.1:8765
+```
+
+(Even with the model stopped it works: it answers from memory in
+**offline mode** and keeps learning. Desktop with a display?
+`python own_agent.py chat --tk` for the Tkinter version.)
+
+**Every chat makes it smarter — the read → learn → tune loop:**
+
+1. **READ** — each message is stored in `workspace/memory.db`.
+2. **LEARN** — it extracts facts automatically. Say "my name is Ahmed",
+   "I prefer Flask", "I'm building a shoes site", or "remember that my
+   shop opens in June" — you'll see a 🧠 chip for each new learning.
+3. **TUNE** — every reply is built with a prompt tuned from your learned
+   profile + the most relevant past chats + past projects. Rate any reply
+   👍/👎 and it steers toward/away from that style; dislike long answers
+   a couple of times and it starts keeping them short on its own.
+
+**The three tabs:**
+
+- 💬 **Chat** — talk; code answers render in code boxes. Ask "what is my
+  name?" or "what do you know about me?" to see its memory in action.
+- 🏗 **Build** — type a project ("Flask website for a shoes company"),
+  watch the Plan→Build→Verify log live; the result lands in `workspace/`
+  and is remembered like any CLI run.
+- 🧠 **Memory** — stats (chats / facts / 👍 / 👎), everything it learned
+  about you (🗑 forgets any single fact), and all remembered projects.
+
+**Try this 60-second demo:**
+
+```
+you:  my name is Ahmed and I prefer Flask
+bot:  …  🧠 learned: name = Ahmed  🧠 learned: prefers = Flask
+you:  what is my name?
+bot:  Your name is Ahmed.   (it recalled you — no model magic needed)
+```
+
+---
+
+## 11. Upgrading later
 
 - **Stronger model:** when your phone (or patience) allows, try
   Qwen2.5-Coder-3B Q4 (~2 GB) — noticeably better, but tight on 4 GB:
