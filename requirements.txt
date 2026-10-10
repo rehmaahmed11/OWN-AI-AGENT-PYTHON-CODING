@@ -1,0 +1,4 @@
+# The agent itself runs on the Python 3.9+ standard library ONLY.
+# This file intentionally lists no dependencies — nothing to pip install.
+# (The *projects* the agent generates will have their own requirements.txt,
+#  e.g. Flask / FastAPI / Django, installed with pip when you run them.)

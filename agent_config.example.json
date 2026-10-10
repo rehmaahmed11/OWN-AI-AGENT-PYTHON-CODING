@@ -1,0 +1,13 @@
+{
+  "base_url": "http://127.0.0.1:8080",
+  "workspace": "workspace",
+  "extra_roots": {},
+  "temperature": 0.2,
+  "max_tokens_plan": 512,
+  "max_tokens_file": 1536,
+  "max_tokens_review": 256,
+  "max_files": 25,
+  "memory_results": 3,
+  "timeout_s": 600,
+  "review": true
+}
