@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+
+# Local runtime data (keep out of git):
+agent_config.json
+models/
+workspace/*
+!workspace/.gitkeep
